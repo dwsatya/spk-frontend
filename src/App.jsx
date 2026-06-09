@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import Login from './pages/Login'
 
 function App() {
   return (
     <div>
-      <h1>SPK Hotel ABC</h1>
+      <Login />
     </div>
   )
 }
