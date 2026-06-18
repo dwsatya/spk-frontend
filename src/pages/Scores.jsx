@@ -2,7 +2,12 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   getEmployees,
   getCriteria,
+  getAllScores,
+  getEmployeeScores,
+  createEmployeeScores,
+  updateEmployeeScores,
   unwrapList,
+  buildScoresMap,
   getApiError,
 } from '../services/api';
 
@@ -16,7 +21,9 @@ const FILTERS = [
 function getEmployeeScoreStatus(empId, criteria, scores) {
   if (criteria.length === 0) return 'empty';
   const empScores = scores[empId] || {};
-  const filled = criteria.filter((c) => empScores[c.code] !== undefined && empScores[c.code] !== '').length;
+  const filled = criteria.filter(
+    (c) => empScores[c.code] !== undefined && empScores[c.code] !== ''
+  ).length;
   if (filled === 0) return 'empty';
   if (filled === criteria.length) return 'complete';
   return 'partial';
@@ -36,6 +43,8 @@ export default function Scores() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [selectedEmp, setSelectedEmp] = useState(null);
   const [formValues, setFormValues] = useState({});
   const [toast, setToast] = useState(null);
@@ -45,17 +54,25 @@ export default function Scores() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const loadScores = useCallback(async (criteriaList) => {
+    const res = await getAllScores();
+    const rows = unwrapList(res);
+    setScores(buildScoresMap(rows, criteriaList));
+  }, []);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [empRes, critRes] = await Promise.all([getEmployees(), getCriteria()]);
-      setEmployees(unwrapList(empRes));
-      setCriteria(unwrapList(critRes));
-
-      const savedScores = localStorage.getItem('spk_scores');
-      if (savedScores) {
-        setScores(JSON.parse(savedScores));
-      }
+      const [empRes, critRes, scoresRes] = await Promise.all([
+        getEmployees(),
+        getCriteria(),
+        getAllScores(),
+      ]);
+      const empList = unwrapList(empRes);
+      const critList = unwrapList(critRes);
+      setEmployees(empList);
+      setCriteria(critList);
+      setScores(buildScoresMap(unwrapList(scoresRes), critList));
     } catch (err) {
       showToast(getApiError(err, 'Gagal memuat data.'), 'error');
     } finally {
@@ -82,23 +99,34 @@ export default function Scores() {
     return { complete, partial, empty, progress };
   }, [employees, criteria, scores]);
 
-  const handleOpenInput = (emp) => {
+  const handleOpenInput = async (emp) => {
     setSelectedEmp(emp);
-    const empScores = scores[emp.id] || {};
-    const initialValues = {};
-    criteria.forEach((crit) => {
-      initialValues[crit.code] =
-        empScores[crit.code] !== undefined ? empScores[crit.code] : '';
-    });
-    setFormValues(initialValues);
     setModalOpen(true);
+    setModalLoading(true);
+    setFormValues({});
+
+    try {
+      const res = await getEmployeeScores(emp.id);
+      const list = unwrapList(res);
+      const initialValues = {};
+      criteria.forEach((crit) => {
+        const found = list.find((s) => s.criteria_id === crit.id);
+        initialValues[crit.code] = found ? found.value : '';
+      });
+      setFormValues(initialValues);
+    } catch (err) {
+      showToast(getApiError(err, 'Gagal memuat nilai karyawan.'), 'error');
+      setModalOpen(false);
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   const handleInputChange = (code, val) => {
     setFormValues((prev) => ({ ...prev, [code]: val }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const unfilled = criteria.find(
@@ -109,16 +137,32 @@ export default function Scores() {
       return;
     }
 
-    const numericScores = {};
-    criteria.forEach((crit) => {
-      numericScores[crit.code] = parseFloat(formValues[crit.code]) || 0;
+    const payload = criteria.map((crit) => ({
+      criteria_id: crit.id,
+      value: parseFloat(formValues[crit.code]) || 0,
+    }));
+
+    const hasExisting = criteria.some((c) => {
+      const val = scores[selectedEmp.id]?.[c.code];
+      return val !== undefined && val !== '';
     });
 
-    const newScores = { ...scores, [selectedEmp.id]: numericScores };
-    setScores(newScores);
-    localStorage.setItem('spk_scores', JSON.stringify(newScores));
-    showToast(`Nilai evaluasi "${selectedEmp.name}" berhasil disimpan.`);
-    setModalOpen(false);
+    setSubmitting(true);
+    try {
+      if (hasExisting) {
+        await updateEmployeeScores(selectedEmp.id, payload);
+        showToast(`Nilai evaluasi "${selectedEmp.name}" berhasil diperbarui.`);
+      } else {
+        await createEmployeeScores(selectedEmp.id, payload);
+        showToast(`Nilai evaluasi "${selectedEmp.name}" berhasil disimpan.`);
+      }
+      await loadScores(criteria);
+      setModalOpen(false);
+    } catch (err) {
+      showToast(getApiError(err), 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const filteredEmployees = employees.filter((emp) => {
@@ -147,7 +191,6 @@ export default function Scores() {
         </p>
       </div>
 
-      {/* Stat Cards */}
       <div className="scores-stats-grid">
         <div className="stat-card">
           <div className="stat-icon stat-icon--purple">
@@ -165,7 +208,7 @@ export default function Scores() {
           <div className="stat-icon stat-icon--cyan">
             <svg viewBox="0 0 24 24" fill="none">
               <path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </div>
           <div className="stat-info">
@@ -199,7 +242,6 @@ export default function Scores() {
         </div>
       </div>
 
-      {/* Progress Banner */}
       {!loading && employees.length > 0 && criteria.length > 0 && (
         <div className="scores-progress-box">
           <div className="scores-progress-info">
@@ -215,7 +257,6 @@ export default function Scores() {
         </div>
       )}
 
-      {/* Actions */}
       <div className="crud-actions" style={{ marginBottom: '1rem' }}>
         <div className="search-input-wrapper">
           <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
@@ -243,7 +284,6 @@ export default function Scores() {
         </div>
       </div>
 
-      {/* Matrix Table */}
       <div className="table-container scores-matrix-wrap">
         {!loading && criteria.length === 0 ? (
           <div className="scores-empty-state">
@@ -329,6 +369,7 @@ export default function Scores() {
                             className="btn-icon-action btn-icon-action--edit"
                             onClick={() => handleOpenInput(emp)}
                             title={status === 'complete' ? 'Edit Nilai' : 'Input Nilai'}
+                            disabled={criteria.length === 0}
                           >
                             <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
                               <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -345,13 +386,12 @@ export default function Scores() {
         )}
       </div>
 
-      {/* Input Modal */}
       {modalOpen && selectedEmp && (
         <div className="modal-overlay">
           <div className="modal-card" style={{ maxWidth: '520px' }}>
             <div className="modal-header">
               <h3>Input Nilai Evaluasi</h3>
-              <button className="modal-close-btn" onClick={() => setModalOpen(false)}>
+              <button className="modal-close-btn" onClick={() => setModalOpen(false)} disabled={submitting}>
                 <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
                   <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                   <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -372,55 +412,73 @@ export default function Scores() {
                   </div>
                 </div>
 
-                {criteria.length > 0 && (
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                    Terisi {filledInModal} / {criteria.length} kriteria
+                {modalLoading ? (
+                  <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 0' }}>
+                    Memuat nilai karyawan...
                   </p>
-                )}
+                ) : (
+                  <>
+                    {criteria.length > 0 && (
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                        Terisi {filledInModal} / {criteria.length} kriteria
+                      </p>
+                    )}
 
-                <div className="scores-criteria-grid">
-                  {criteria.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-                      Harap tambah kriteria di modul kriteria terlebih dahulu.
-                    </p>
-                  ) : (
-                    criteria.map((crit) => (
-                      <div className="scores-criteria-input-card" key={crit.id}>
-                        <div className="scores-criteria-input-header">
-                          <label>
-                            {crit.code} — {crit.name}
-                          </label>
-                          <div className="scores-criteria-meta">
-                            <span className={`scores-criteria-tag scores-criteria-tag--${crit.attribute}`}>
-                              {crit.attribute}
-                            </span>
-                            <span className="scores-criteria-tag scores-criteria-tag--unit">
-                              {crit.unit}
-                            </span>
+                    <div className="scores-criteria-grid">
+                      {criteria.length === 0 ? (
+                        <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                          Harap tambah kriteria di modul kriteria terlebih dahulu.
+                        </p>
+                      ) : (
+                        criteria.map((crit) => (
+                          <div className="scores-criteria-input-card" key={crit.id}>
+                            <div className="scores-criteria-input-header">
+                              <label>
+                                {crit.code} — {crit.name}
+                              </label>
+                              <div className="scores-criteria-meta">
+                                <span className={`scores-criteria-tag scores-criteria-tag--${crit.attribute}`}>
+                                  {crit.attribute}
+                                </span>
+                                <span className="scores-criteria-tag scores-criteria-tag--unit">
+                                  {crit.unit}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="input-wrapper">
+                              <input
+                                type="number"
+                                step="any"
+                                min="0"
+                                placeholder={`Nilai (${crit.unit})...`}
+                                value={formValues[crit.code] !== undefined ? formValues[crit.code] : ''}
+                                onChange={(e) => handleInputChange(crit.code, e.target.value)}
+                                required
+                                disabled={submitting}
+                              />
+                            </div>
                           </div>
-                        </div>
-                        <div className="input-wrapper">
-                          <input
-                            type="number"
-                            step="any"
-                            min="0"
-                            placeholder={`Nilai (${crit.unit})...`}
-                            value={formValues[crit.code] !== undefined ? formValues[crit.code] : ''}
-                            onChange={(e) => handleInputChange(crit.code, e.target.value)}
-                            required
-                          />
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn-secondary-spk" onClick={() => setModalOpen(false)}>
+                <button
+                  type="button"
+                  className="btn-secondary-spk"
+                  onClick={() => setModalOpen(false)}
+                  disabled={submitting || modalLoading}
+                >
                   Batal
                 </button>
-                <button type="submit" className="btn-primary-spk" disabled={criteria.length === 0}>
-                  Simpan Evaluasi
+                <button
+                  type="submit"
+                  className="btn-primary-spk"
+                  disabled={criteria.length === 0 || submitting || modalLoading}
+                >
+                  {submitting ? 'Menyimpan...' : 'Simpan Evaluasi'}
                 </button>
               </div>
             </form>

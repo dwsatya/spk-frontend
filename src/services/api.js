@@ -1,16 +1,17 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://127.0.0.1:5000/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
+  const token = localStorage.getItem("access_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -21,13 +22,16 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('access_token');
-      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-        window.location.href = '/login';
+      localStorage.removeItem("access_token");
+      if (
+        window.location.pathname !== "/login" &&
+        window.location.pathname !== "/register"
+      ) {
+        window.location.href = "/login";
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export const unwrapList = (response) => {
@@ -37,25 +41,28 @@ export const unwrapList = (response) => {
   return [];
 };
 
-export const getApiError = (error, fallback = 'Terjadi kesalahan. Coba lagi.') =>
+export const getApiError = (
+  error,
+  fallback = "Terjadi kesalahan. Coba lagi.",
+) =>
   error.response?.data?.message ||
   error.response?.data?.error ||
-  (typeof error.response?.data === 'string' ? error.response.data : null) ||
+  (typeof error.response?.data === "string" ? error.response.data : null) ||
   fallback;
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 export const login = (email, password) =>
-  api.post('/auth/login', { email, password });
+  api.post("/auth/login", { email, password });
 
-export const register = (name, email, password, role = 'user') =>
-  api.post('/auth/register', { name, email, password, role });
+export const register = (name, email, password, role = "user") =>
+  api.post("/auth/register", { name, email, password, role });
 
-export const getMe = () => api.get('/auth/me');
+export const getMe = () => api.get("/auth/me");
 
 // ─── Users ───────────────────────────────────────────────────────────────────
 
-export const getUsers = () => api.get('/auth/users');
+export const getUsers = () => api.get("/auth/users");
 
 export const getUserById = (id) => api.get(`/auth/users/${id}`);
 
@@ -68,9 +75,9 @@ export const deleteUser = (id) => api.delete(`/auth/users/${id}`);
 
 // ─── Employees ───────────────────────────────────────────────────────────────
 
-export const getEmployees = () => api.get('/employees/');
+export const getEmployees = () => api.get("/employees/");
 
-export const createEmployee = (data) => api.post('/employees/', data);
+export const createEmployee = (data) => api.post("/employees/", data);
 
 export const updateEmployee = (id, data) => api.put(`/employees/${id}`, data);
 
@@ -78,12 +85,42 @@ export const deleteEmployee = (id) => api.delete(`/employees/${id}`);
 
 // ─── Criteria ────────────────────────────────────────────────────────────────
 
-export const getCriteria = () => api.get('/criteria/');
+export const getCriteria = () => api.get("/criteria/");
 
-export const createCriteria = (data) => api.post('/criteria/', data);
+export const createCriteria = (data) => api.post("/criteria/", data);
 
 export const updateCriteria = (id, data) => api.put(`/criteria/${id}`, data);
 
 export const deleteCriteria = (id) => api.delete(`/criteria/${id}`);
+
+// ─── Scores ──────────────────────────────────────────────────────────────────
+
+export const getAllScores = () => api.get("/scores/");
+
+export const getEmployeeScores = (employeeId) =>
+  api.get(`/scores/employee/${employeeId}`);
+
+export const createEmployeeScores = (employeeId, scores) =>
+  api.post(`/scores/employee/${employeeId}`, { scores });
+
+export const updateEmployeeScores = (employeeId, scores) =>
+  api.post(`/scores/employee/${employeeId}`, { scores });
+
+export const deleteScore = (scoreId) => api.delete(`/scores/${scoreId}`);
+
+export const buildScoresMap = (scoreRows, criteriaList) => {
+  const idToCode = Object.fromEntries(criteriaList.map((c) => [c.id, c.code]));
+  const map = {};
+
+  scoreRows.forEach((row) => {
+    const empId = row.employee_id;
+    const code = idToCode[row.criteria_id];
+    if (!empId || !code) return;
+    if (!map[empId]) map[empId] = {};
+    map[empId][code] = row.value;
+  });
+
+  return map;
+};
 
 export default api;
