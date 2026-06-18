@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { getCriteria, unwrapList } from "../../services/api";
+import { getCriteria, getWaspasRanking, unwrapList } from "../../services/api";
 
 const quickActions = [
   {
@@ -119,14 +119,14 @@ export default function ManagerDashboard() {
   const [stats, setStats] = useState({ criteria: "—", weight: "—", ranking: "—" });
 
   useEffect(() => {
-    getCriteria()
-      .then((res) => {
-        const list = unwrapList(res);
+    Promise.all([getCriteria(), getWaspasRanking()])
+      .then(([critRes, rankRes]) => {
+        const list = unwrapList(critRes);
         const totalWeight = list.reduce((sum, c) => sum + (parseFloat(c.weight) || 0), 0);
         setStats({
           criteria: list.length,
           weight: totalWeight.toFixed(2),
-          ranking: "—",
+          ranking: unwrapList(rankRes).length,
         });
       })
       .catch(() => {});

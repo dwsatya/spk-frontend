@@ -2625,3 +2625,54 @@ body {
     font-size: 1.25rem;
   }
 }
+
+/* ─── Ranking Page (Authenticated) ─────────────────────────────────────────── */
+.ranking-page-table-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.ranking-page-table-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.ranking-page-table-header h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.ranking-page-table-header p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.ranking-page-table-card .announcement-table-wrapper {
+  border-radius: 0;
+}
+
+.landing-ranking-error {
+  text-align: center;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  background: rgba(244, 63, 94, 0.06);
+  border: 1px solid rgba(244, 63, 94, 0.15);
+  border-radius: var(--radius-md);
+  color: #fb7185;
+}
+
+.landing-ranking-error p {
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.landing-ranking-note {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

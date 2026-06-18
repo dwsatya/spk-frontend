@@ -104,7 +104,7 @@ export const createEmployeeScores = (employeeId, scores) =>
   api.post(`/scores/employee/${employeeId}`, { scores });
 
 export const updateEmployeeScores = (employeeId, scores) =>
-  api.post(`/scores/employee/${employeeId}`, { scores });
+  api.put(`/scores/employee/${employeeId}`, { scores });
 
 export const deleteScore = (scoreId) => api.delete(`/scores/${scoreId}`);
 
@@ -121,6 +121,22 @@ export const buildScoresMap = (scoreRows, criteriaList) => {
   });
 
   return map;
+};
+
+// ─── WASPAS Ranking ──────────────────────────────────────────────────────────
+
+export const getWaspasRanking = () => api.get("/waspas/calculate");
+
+export const formatWaspasScore = (value) =>
+  typeof value === "number" ? value.toFixed(4) : "—";
+
+export const getWaspasClassification = (qFinal) => {
+  const score = parseFloat(qFinal);
+  if (Number.isNaN(score)) return "—";
+  if (score >= 0.8) return "Sangat Layak";
+  if (score >= 0.6) return "Layak";
+  if (score >= 0.4) return "Cukup Layak";
+  return "Kurang Layak";
 };
 
 export default api;

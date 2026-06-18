@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getEmployees, getAllScores, unwrapList } from '../../services/api';
+import { getEmployees, getAllScores, getWaspasRanking, unwrapList } from '../../services/api';
 
 const quickActions = [
   {
@@ -89,15 +89,15 @@ export default function HrdDashboard() {
   const [stats, setStats] = useState({ employees: '—', scores: '—', ranking: '—' });
 
   useEffect(() => {
-    Promise.all([getEmployees(), getAllScores()])
-      .then(([empRes, scoresRes]) => {
+    Promise.all([getEmployees(), getAllScores(), getWaspasRanking()])
+      .then(([empRes, scoresRes, rankRes]) => {
         const employees = unwrapList(empRes);
         const scoreRows = unwrapList(scoresRes);
         const uniqueEmployees = new Set(scoreRows.map((s) => s.employee_id));
         setStats({
           employees: employees.length,
           scores: uniqueEmployees.size,
-          ranking: '—',
+          ranking: unwrapList(rankRes).length,
         });
       })
       .catch(() => {});

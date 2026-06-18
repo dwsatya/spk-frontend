@@ -1,21 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-// Mock data hasil peringkat untuk ditampilkan di landing page pengumuman
-const mockRankings = [
-  { rank: 1, name: 'Budi Santoso', score: '0.942', status: 'Sangat Layak' },
-  { rank: 2, name: 'Siti Rahmawati', score: '0.895', status: 'Layak' },
-  { rank: 3, name: 'Dewi Lestari', score: '0.871', status: 'Layak' },
-  { rank: 4, name: 'Rian Hidayat', score: '0.812', status: 'Layak' },
-  { rank: 5, name: 'Adi Wijaya', score: '0.758', status: 'Cukup Layak' },
-];
+import RankingTable from '../components/RankingTable';
+import { getWaspasRanking, unwrapList, getApiError } from '../services/api';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [rankings, setRankings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchRanking = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await getWaspasRanking();
+      const list = unwrapList(res).sort((a, b) => a.rank - b.rank);
+      setRankings(list);
+    } catch (err) {
+      setError(getApiError(err, 'Gagal memuat pengumuman peringkat.'));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRanking();
+  }, [fetchRanking]);
 
   return (
     <div className="landing-page-container">
-      {/* ─── Navbar Publik ─── */}
       <header className="landing-navbar">
         <div className="landing-logo">
           <div className="brand-icon-sm">
@@ -36,7 +49,6 @@ export default function LandingPage() {
       </header>
 
       <main className="landing-main">
-        {/* ─── Hero Landing ─── */}
         <section className="landing-hero-section">
           <div className="hero-glow-public" />
           <h1 className="landing-title">
@@ -47,7 +59,6 @@ export default function LandingPage() {
           </p>
         </section>
 
-        {/* ─── Tabel Pengumuman Ranking ─── */}
         <section className="ranking-announcement-section">
           <div className="announcement-header">
             <div className="announcement-badge">
@@ -58,49 +69,32 @@ export default function LandingPage() {
             <p>Perangkingan transparan berdasarkan akumulasi nilai kriteria dan bobot keputusan.</p>
           </div>
 
-          <div className="announcement-table-wrapper">
-            <table className="announcement-table">
-              <thead>
-                <tr>
-                  <th style={{ width: '80px', textAlign: 'center' }}>Rank</th>
-                  <th>Nama Karyawan</th>
-                  <th style={{ width: '150px', textAlign: 'center' }}>Skor Akhir (Qi)</th>
-                  <th style={{ width: '180px', textAlign: 'center' }}>Klasifikasi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockRankings.map((row) => (
-                  <tr key={row.rank} className={row.rank <= 3 ? 'top-rank' : ''}>
-                    <td className="rank-cell">
-                      {row.rank <= 3 ? (
-                        <span className={`rank-badge rank-badge--${row.rank}`}>
-                          {row.rank}
-                        </span>
-                      ) : (
-                        row.rank
-                      )}
-                    </td>
-                    <td className="name-cell">
-                      <strong>{row.name}</strong>
-                    </td>
-                    <td className="score-cell">{row.score}</td>
-                    <td className="status-cell">
-                      <span className={`status-pill ${row.rank <= 3 ? 'status-pill--success' : 'status-pill--info'}`}>
-                        {row.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {error && (
+            <div className="landing-ranking-error">
+              <p>{error}</p>
+              <button type="button" className="btn-secondary-spk" onClick={fetchRanking}>
+                Coba Lagi
+              </button>
+            </div>
+          )}
+
+          <RankingTable
+            rankings={rankings}
+            loading={loading}
+            emptyMessage="Belum ada hasil peringkat. Pastikan data karyawan, kriteria, dan nilai sudah lengkap."
+          />
+
+          {!loading && rankings.length > 0 && (
+            <p className="landing-ranking-note">
+              Menampilkan {rankings.length} karyawan terperingkat berdasarkan perhitungan WASPAS terbaru.
+            </p>
+          )}
         </section>
 
-        {/* ─── Penjelasan Singkat Metode ─── */}
         <section className="landing-features">
           <div className="feature-item">
             <h4>Kombinasi Metode WSM & WPM</h4>
-            <p>WASPAS mengintegrasikan keunggulan *Weighted Sum Model* (WSM) dan *Weighted Product Model* (WPM) untuk menjaga konsistensi keputusan yang optimal.</p>
+            <p>WASPAS mengintegrasikan keunggulan Weighted Sum Model (WSM) dan Weighted Product Model (WPM) untuk menjaga konsistensi keputusan yang optimal.</p>
           </div>
           <div className="feature-item">
             <h4>Transparansi Penuh</h4>
