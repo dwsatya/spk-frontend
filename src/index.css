@@ -828,6 +828,21 @@ body {
   color: #34d399;
 }
 
+.stat-icon--cyan {
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--accent);
+}
+
+.stat-icon--teal {
+  background: rgba(20, 184, 166, 0.15);
+  color: #2dd4bf;
+}
+
+.stat-icon--amber {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
 .stat-info {
   display: flex;
   flex-direction: column;
@@ -2299,4 +2314,314 @@ body {
 .badge-role--user {
   color: var(--text-muted);
   background: rgba(255, 255, 255, 0.04);
+}
+
+/* ─── Scores Page ──────────────────────────────────────────────────────────── */
+.scores-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.scores-progress-box {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.5rem;
+}
+
+.scores-progress-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.scores-progress-info strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.scores-progress-info p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.scores-progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.scores-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transition: width 0.4s ease;
+}
+
+.scores-progress-pct {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--primary-light);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.scores-filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.scores-filter-tab {
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.scores-filter-tab:hover {
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+
+.scores-filter-tab--active {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.35);
+  color: var(--primary-light);
+}
+
+.scores-matrix-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+}
+
+.scores-matrix-table th.crit-header {
+  text-align: center;
+  min-width: 90px;
+  vertical-align: bottom;
+  padding: 0.75rem 0.5rem;
+}
+
+.crit-header-code {
+  display: block;
+  font-weight: 700;
+  color: var(--primary-light);
+  font-size: 0.85rem;
+}
+
+.crit-header-name {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
+.scores-emp-cell {
+  min-width: 200px;
+}
+
+.scores-emp-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.scores-emp-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.score-value-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary-light);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.score-value-empty {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.scores-status-pill {
+  display: inline-flex;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.scores-status-pill--complete {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.scores-status-pill--partial {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.scores-status-pill--empty {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.scores-modal-emp-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.25rem;
+}
+
+.scores-modal-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.scores-modal-emp-info strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.scores-modal-emp-info span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.scores-criteria-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.scores-criteria-input-card {
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition);
+}
+
+.scores-criteria-input-card:focus-within {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.scores-criteria-input-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.scores-criteria-input-header label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.scores-criteria-meta {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.scores-criteria-tag {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.scores-criteria-tag--benefit {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+
+.scores-criteria-tag--cost {
+  background: rgba(244, 63, 94, 0.1);
+  color: #f43f5e;
+}
+
+.scores-criteria-tag--unit {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+}
+
+.scores-empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text-muted);
+}
+
+.scores-empty-state svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  opacity: 0.4;
+}
+
+.scores-empty-state p {
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.scores-empty-state small {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+  .scores-progress-box {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .scores-progress-pct {
+    font-size: 1.25rem;
+  }
 }
