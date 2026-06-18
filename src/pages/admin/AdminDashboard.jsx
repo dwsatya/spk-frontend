@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getUsers, getEmployees, getCriteria, unwrapList } from '../../services/api';
+import { getUsers, getEmployees, getCriteria, getWaspasRanking, unwrapList } from '../../services/api';
 
 const quickActions = [
   {
@@ -126,13 +126,13 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({ users: '—', employees: '—', criteria: '—', ranking: '—' });
 
   useEffect(() => {
-    Promise.all([getUsers(), getEmployees(), getCriteria()])
-      .then(([usersRes, empRes, critRes]) => {
+    Promise.all([getUsers(), getEmployees(), getCriteria(), getWaspasRanking()])
+      .then(([usersRes, empRes, critRes, rankRes]) => {
         setStats({
           users: unwrapList(usersRes).length,
           employees: unwrapList(empRes).length,
           criteria: unwrapList(critRes).length,
-          ranking: '—',
+          ranking: unwrapList(rankRes).length,
         });
       })
       .catch(() => {});
