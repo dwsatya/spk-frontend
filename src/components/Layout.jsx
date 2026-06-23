@@ -86,7 +86,7 @@ export default function Layout() {
 
   const handleLogout = () => {
     logoutUser();
-    navigate('/login');
+    navigate('/');
   };
 
   // Filter menu navigasi berdasarkan role user

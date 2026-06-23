@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { login as loginApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -136,10 +136,7 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="auth-footer">
-          Belum punya akun?{' '}
-          <Link to="/register" id="go-to-register-link">Daftar sekarang</Link>
-        </div>
+
       </div>
     </div>
   );
